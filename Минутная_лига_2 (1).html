@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Минутная лига</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#F3F5F8; --surface:#FFFFFF; --sunk:#E9EDF3; --line:#DCE2EA;
+  --ink:#10151F; --ink2:#3B4452; --muted:#6B7586;
+  --accent:#1D5BD6; --accent-soft:#E3ECFC;
+  --bee:#D9A400; --bee-soft:#FBF1CF; --mango:#2E9C7E; --mango-soft:#DCF1EA;
+  --good:#1E8F52; --good-soft:#DDF2E6; --warn:#B86E00; --bad:#C63B37;
+  --shadow:0 1px 2px rgba(16,21,31,.05),0 6px 20px -8px rgba(16,21,31,.12);
+  --display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0D1219; --surface:#151C26; --sunk:#1B2430; --line:#263140;
+  --ink:#E8EDF4; --ink2:#C0C8D4; --muted:#8B96A8;
+  --accent:#6D9BFF; --accent-soft:#1B2A47;
+  --bee:#F0C43A; --bee-soft:#3A3113; --mango:#4FC4A2; --mango-soft:#13362D;
+  --good:#46C07F; --good-soft:#133523; --warn:#E3A23A; --bad:#F0736E;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -10px rgba(0,0,0,.5);
+}}
+:root[data-theme="dark"]{
+  --ground:#0D1219; --surface:#151C26; --sunk:#1B2430; --line:#263140;
+  --ink:#E8EDF4; --ink2:#C0C8D4; --muted:#8B96A8;
+  --accent:#6D9BFF; --accent-soft:#1B2A47;
+  --bee:#F0C43A; --bee-soft:#3A3113; --mango:#4FC4A2; --mango-soft:#13362D;
+  --good:#46C07F; --good-soft:#133523; --warn:#E3A23A; --bad:#F0736E;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -10px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--ground);color:var(--ink);font:15px/1.5 var(--body);margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:22px 48px;display:flex;flex-direction:column;gap:18px}
+.num{font-variant-numeric:tabular-nums}
+.label{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-content:space-between}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{font:700 22px/1.1 var(--display);margin:0;letter-spacing:-.01em}
+.brand .sub{color:var(--muted);font-size:13px}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;background:var(--sunk);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 10px;border-radius:8px;font-weight:500;color:var(--ink2)}
+.seg button:hover{background:var(--surface)}
+.seg .cur{min-width:150px;text-align:center;font-weight:600;color:var(--ink);background:var(--surface);box-shadow:var(--shadow)}
+select{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.fresh{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:4px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--ink2)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.bee{background:var(--bee)} .dot.mango{background:var(--mango)}
+.notice{background:var(--accent-soft);color:var(--ink);border-radius:12px;padding:10px 14px;font-size:14px}
+.notice[hidden]{display:none}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.panel{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:20px}
+.today{display:grid;grid-template-columns:auto minmax(0,1fr);gap:22px;align-items:center}
+.gauge{width:210px;max-width:100%;aspect-ratio:1;position:relative}
+.gauge svg{width:100%;height:100%;display:block}
+.gauge .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.gauge .big{font:700 52px/1 var(--display);letter-spacing:-.03em}
+.gauge .of{color:var(--muted);font-size:13px;margin-top:6px}
+.today-side{display:flex;flex-direction:column;gap:14px;min-width:0;max-width:560px}
+.today-side h2{font:600 19px/1.25 var(--body);margin:0;text-wrap:balance}
+.status{display:inline-flex;align-self:flex-start;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:4px 10px;border-radius:999px}
+.status.ok{background:var(--good-soft);color:var(--good)}
+.status.go{background:var(--accent-soft);color:var(--accent)}
+.status.idle{background:var(--sunk);color:var(--muted)}
+.split{display:flex;flex-direction:column;gap:8px}
+.split .row{display:flex;align-items:center;gap:10px;font-size:14px}
+.split .row .v{margin-left:auto;font-weight:600}
+.bar{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden;display:flex}
+.bar i{display:block;height:100%}
+.bar .b{background:var(--bee)} .bar .m{background:var(--mango)}
+
+/* week */
+.week-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.week-head h2{font:600 18px/1.2 var(--body);margin:0}
+.week-total{font:700 30px/1 var(--display);letter-spacing:-.02em}
+.week-total small{font:500 14px var(--body);color:var(--muted);letter-spacing:0;margin-left:6px}
+.chart{width:100%;overflow-x:auto}
+.chart svg{display:block;width:100%;min-width:520px;height:auto}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin-top:6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.pnav{display:flex;align-items:center;gap:6px}
+.pnav button{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:30px;height:30px;color:var(--ink2);font-weight:600}
+.pnav button:hover{border-color:var(--accent);color:var(--accent)}
+.pnav button:disabled{opacity:.35;cursor:default}
+.wsplit{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px;color:var(--ink2);margin-top:6px}
+.wsplit span{display:inline-flex;align-items:center;gap:6px}
+.wsplit b{font-weight:600;color:var(--ink)}
+.legend .dash{width:18px;border-top:2px dashed var(--ink2)}
+
+/* lower */
+.lower{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;align-items:start}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+.panel h3{font:600 16px/1.3 var(--body);margin:0 0 12px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.panel h3 .label{font-weight:500}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.t,td.d{font-family:var(--mono);font-size:13px;white-space:nowrap}
+td.d{text-align:right}
+th.r{text-align:right}
+.who{display:flex;flex-direction:column;min-width:0}
+.who .n{font-weight:500}
+.who .p{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.dir{display:inline-flex;width:22px;height:22px;border-radius:6px;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.dir.out{background:var(--accent-soft);color:var(--accent)}
+.dir.in{background:var(--mango-soft);color:var(--mango)}
+tr.skip td{color:var(--muted)}
+tr.skip .who .n{color:var(--muted)}
+.tag{font-size:11px;padding:1px 6px;border-radius:5px;background:var(--sunk);color:var(--muted);margin-left:6px;white-space:nowrap;font-family:var(--body)}
+.mango-line{display:flex;align-items:center;gap:10px;background:var(--mango-soft);border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:14px}
+.mango-line .v{margin-left:auto;font-weight:600}
+.empty{color:var(--muted);font-size:14px;padding:14px 0}
+
+.rank{display:flex;flex-direction:column;gap:8px}
+.rank .r{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--sunk)}
+.rank .pos{font:700 15px var(--display);color:var(--accent)}
+.rank .nm{font-weight:600}
+.rank .mn{font-weight:600}
+.rank .soon{color:var(--muted);font-size:13px;padding:2px 2px}
+.top-list{display:flex;flex-direction:column;gap:10px}
+.top-list .it{display:flex;flex-direction:column;gap:4px}
+.top-list .ln{display:flex;gap:10px;align-items:baseline;font-size:14px}
+.top-list .ln .nm{min-width:0;overflow-wrap:anywhere}
+.top-list .ln .mn{margin-left:auto;font-weight:600;white-space:nowrap}
+.top-list .bar{height:6px}
+.top-list .bar i{background:var(--accent)}
+
+form{display:flex;flex-direction:column;gap:10px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:12.5px;color:var(--ink2);font-weight:500}
+.field textarea{background:var(--ground);border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%;font-family:var(--mono);font-size:13px;resize:vertical}
+.pertxt{padding:8px 0;font-weight:600;font-size:14px}
+.field select{width:100%}
+.field input{background:var(--ground);border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%}
+.btn{border:0;background:var(--accent);color:#fff;border-radius:10px;padding:9px 14px;font-weight:600}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.5;cursor:default}
+.hint{font-size:12.5px;color:var(--muted)}
+.toast{font-size:13px;color:var(--good);min-height:1em}
+.toast.err{color:var(--bad)}
+
+@media (max-width:860px){
+  .hero,.lower{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:520px){
+  .today{grid-template-columns:minmax(0,1fr);justify-items:center}
+  .today-side{width:100%}
+  .gauge{width:190px}
+  .seg .cur{min-width:118px}
+  .fields{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:no-preference){
+  .xp i,.bar i{transition:width .5s ease}
+  .gauge .arc{transition:stroke-dashoffset .6s ease}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Минутная лига</h1>
+      <span class="sub">Климэйт · отдел продаж · минуты разговора с клиентами</span>
+    </div>
+    <div class="controls">
+      <label class="label" for="mgr" style="position:absolute;left:-9999px">Менеджер</label>
+      <select id="mgr"></select>
+      <div class="seg" role="group" aria-label="Выбор дня">
+        <button id="prev" type="button" aria-label="Предыдущий день">‹</button>
+        <button id="cur" type="button" class="cur num" title="Вернуться к сегодняшнему дню">-</button>
+        <button id="next" type="button" aria-label="Следующий день">›</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="fresh" id="fresh"></div>
+  <div class="notice" id="notice" hidden></div>
+
+  <section class="hero">
+    <div class="panel today">
+      <div class="gauge" id="gauge"></div>
+      <div class="today-side">
+        <div>
+          <div class="label" id="dayLabel">Сегодня</div>
+          <h2 id="dayTitle">-</h2>
+        </div>
+        <span class="status idle" id="status">-</span>
+        <div class="split">
+          <div class="bar" id="splitBar"><i class="b"></i><i class="m"></i></div>
+          <div class="row"><span class="dot bee"></span>Билайн, мобильный<span class="v num" id="vBee">-</span></div>
+          <div class="row"><span class="dot mango"></span>Манго Телеком<span class="v num" id="vMango">-</span></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="panel">
+    <div class="week-head">
+      <div>
+        <div class="label" id="weekLabel">Отчетная неделя</div>
+        <div class="pnav">
+          <button id="pPrev" type="button" aria-label="Предыдущая отчетная неделя">‹</button>
+          <h2 id="weekTitle" class="num">-</h2>
+          <button id="pNext" type="button" aria-label="Следующая отчетная неделя">›</button>
+        </div>
+        <div class="wsplit" id="weekSplit"></div>
+      </div>
+      <div style="text-align:right">
+        <div class="week-total num" id="weekTotal">-</div>
+        <div class="hint" id="weekHint">-</div>
+      </div>
+    </div>
+    <div class="chart" id="chart"></div>
+    <div class="legend">
+      <span><span class="dot bee"></span>Билайн</span>
+      <span><span class="dot mango"></span>Манго</span>
+      <span><span class="dash"></span>Дневная норма</span>
+      <span class="hint">Период: четверг 14:00 - четверг 14:00. Крайние столбики - неполные дни.</span>
+    </div>
+  </section>
+
+  <section class="lower">
+    <div class="col">
+      <div class="panel">
+        <h3>Звонки дня <span class="label" id="logCount"></span></h3>
+        <div id="mangoLine"></div>
+        <div class="tbl-wrap" id="log"></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="panel">
+        <h3>Рейтинг отчетной недели</h3>
+        <div class="rank" id="rank"></div>
+      </div>
+      <div class="panel">
+        <h3>С кем говорили больше всего <span class="label">отчетная неделя, Билайн</span></h3>
+        <div class="top-list" id="topList"></div>
+      </div>
+      <div class="panel">
+        <h3>Минуты Манго</h3>
+        <form id="mangoForm">
+          <div class="fields">
+            <div class="field"><label for="mScope">Период</label><select id="mScope"><option value="period">За неделю</option><option value="day">За день</option></select></div>
+            <div class="field" id="mDateF"><label for="mDate">Дата</label><input id="mDate" type="date"></div>
+            <div class="field" id="mPerF"><label>Отчетная неделя</label><div class="pertxt num" id="mPer">-</div></div>
+            <div class="field"><label for="mMin">Минут</label><input id="mMin" type="number" min="0" step="1" inputmode="numeric" required placeholder="0"></div>
+          </div>
+          <button class="btn" type="submit" id="mSave">Сохранить минуты</button>
+          <div class="toast" id="mToast" aria-live="polite"></div>
+        </form>
+      </div>
+      <div class="panel">
+        <h3>Правила зачета</h3>
+        <form id="cfgForm">
+          <div class="fields">
+            <div class="field"><label for="cGoal">Квота на отчетную неделю, мин</label><input id="cGoal" type="number" min="1" step="1" required></div>
+            <div class="field"><label for="cMin">Звонок засчитывается от, сек</label><input id="cMin" type="number" min="0" step="1" required></div>
+          </div>
+          <div class="field"><label for="cEx">Номера-исключения (коллеги), по одному в строке</label><textarea id="cEx" rows="4" placeholder="+79851234567"></textarea></div>
+          <div class="hint">Квота сохраняется для выбранной отчетной недели и действует на следующие, пока не изменена. Дневная норма = квота / 5 рабочих дней. Не засчитываются служебные номера (8-800, поддержка оператора) и номера из списка исключений.</div>
+          <button class="btn" type="submit" id="cSave">Сохранить правила</button>
+          <div class="toast" id="cToast" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+const EMBED={"config": {"dailyGoal": 60, "goalSet": true, "quotas": {"2026-08-27": 750}, "periodStart": {"dow": 4, "time": "14:00"}, "minSec": 30, "excluded": ["79853880558", "79150465828", "79168387751", "79951172204"], "managers": [{"id": "georgy", "name": "Георгий"}]}, "bee": {"georgy_2026-08-29": {"manager": "georgy", "date": "2026-08-29", "asOf": "2026-09-10 16:29", "source": "beeline_pdf", "calls": [{"t": "13:36", "num": "+7 800 700-06-11", "name": "", "dir": "out", "sec": 278, "service": true}, {"t": "13:40", "num": "+7 903 703-06-11", "name": "билайн", "dir": "in", "sec": 49, "service": true}], "totalSec": 327, "callsCount": 2}, "georgy_2026-09-04": {"manager": "georgy", "date": "2026-09-04", "asOf": "2026-09-10 16:29", "source": "beeline_pdf", "calls": [{"t": "14:36", "num": "+7 967 132-77-23", "name": "ООО ЭКСПЕРТ: ит", "dir": "out", "sec": 242, "service": false}], "totalSec": 242, "callsCount": 1}, "georgy_2026-09-07": {"manager": "georgy", "date": "2026-09-07", "asOf": "2026-09-10 16:29", "source": "beeline_pdf", "calls": [{"t": "11:23", "num": "+7 916 838-77-51", "name": "", "dir": "out", "sec": 22, "service": false}, {"t": "11:24", "num": "+7 916 838-77-51", "name": "", "dir": "in", "sec": 18, "service": false}, {"t": "13:02", "num": "+7 985 388-05-58", "name": "", "dir": "in", "sec": 62, "service": false}, {"t": "13:02", "num": "+7 985 388-05-58", "name": "", "dir": "out", "sec": 1, "service": false}, {"t": "13:34", "num": "+7 985 388-05-58", "name": "", "dir": "in", "sec": 148, "service": false}, {"t": "13:38", "num": "+7 985 388-05-58", "name": "", "dir": "in", "sec": 112, "service": false}, {"t": "13:40", "num": "+7 985 388-05-58", "name": "", "dir": "in", "sec": 20, "service": false}, {"t": "14:55", "num": "+7 916 805-21-07", "name": "АО ЯУЗА РИЭЛТИ: аренда", "dir": "out", "sec": 35, "service": false}, {"t": "16:05", "num": "+7 916 805-21-07", "name": "АО ЯУЗА РИЭЛТИ: аренда", "dir": "out", "sec": 110, "service": false}, {"t": "16:15", "num": "+7 926 362-83-02", "name": "", "dir": "out", "sec": 96, "service": false}, {"t": "17:34", "num": "+7 916 620-44-30", "name": "", "dir": "out", "sec": 109, "service": false}, {"t": "18:43", "num": "+7 985 388-05-58", "name": "", "dir": "out", "sec": 358, "service": false}], "totalSec": 1091, "callsCount": 12}, "georgy_2026-09-08": {"manager": "georgy", "date": "2026-09-08", "asOf": "2026-09-10 16:29", "source": "beeline_pdf", "calls": [{"t": "09:02", "num": "+7 915 300-92-73", "name": "", "dir": "out", "sec": 1051, "service": false}, {"t": "09:21", "num": "+7 985 388-05-58", "name": "", "dir": "out", "sec": 291, "service": false}, {"t": "09:33", "num": "+7 916 282-44-32", "name": "", "dir": "out", "sec": 74, "service": false}, {"t": "10:12", "num": "+7 985 388-05-58", "name": "", "dir": "out", "sec": 141, "service": false}, {"t": "10:40", "num": "+7 985 388-05-58", "name": "", "dir": "in", "sec": 190, "service": false}, {"t": "10:44", "num": "+7 985 388-05-58", "name": "", "dir": "out", "sec": 120, "service": false}, {"t": "10:46", "num": "+7 985 388-05-58", "name": "", "dir": "out", "sec": 41, "service": false}, {"t": "11:21", "num": "+7 909 915-53-21", "name": "", "dir": "in", "sec": 179, "service": false}, {"t": "11:44", "num": "+7 914 416-72-27", "name": "", "dir": "out", "sec": 123, "service": false}, {"t": "11:51", "num": "+7 916 805-21-07", "name": "АО ЯУЗА РИЭЛТИ: аренда", "dir": "in", "sec": 42, "service": false}, {"t": "15:59", "num": "+7 985 388-05-58", "name": "", "dir": "in", "sec": 72, "service": false}, {"t": "16:31", "num": "+7 916 979-50-52", "name": "", "dir": "out", "sec": 319, "service": false}, {"t": "16:40", "num": "+7 985 388-05-58", "name": "", "dir": "out", "sec": 852, "service": false}, {"t": "17:26", "num": "+7 901 575-31-21", "name": "", "dir": "in", "sec": 48, "service": false}], "totalSec": 3543, "callsCount": 14}, "georgy_2026-09-09": {"manager": "georgy", "date": "2026-09-09", "asOf": "2026-09-10 16:29", "source": "beeline_pdf", "calls": [{"t": "10:06", "num": "+7 906 702-59-69", "name": "АО САДКО ОТЕЛЬ", "dir": "out", "sec": 59, "service": false}, {"t": "10:10", "num": "+7 926 643-74-45", "name": "ЗИКА ОптТорг", "dir": "out", "sec": 72, "service": false}, {"t": "10:13", "num": "+7 977 494-51-59", "name": "", "dir": "out", "sec": 40, "service": false}, {"t": "10:15", "num": "+7 916 440-56-48", "name": "", "dir": "out", "sec": 98, "service": false}, {"t": "10:18", "num": "+7 930 728-45-21", "name": "", "dir": "out", "sec": 22, "service": false}, {"t": "10:28", "num": "+7 915 199-45-84", "name": "", "dir": "out", "sec": 71, "service": false}, {"t": "10:35", "num": "+7 926 862-23-81", "name": "", "dir": "out", "sec": 168, "service": false}, {"t": "10:51", "num": "+7 985 388-05-58", "name": "", "dir": "out", "sec": 838, "service": false}, {"t": "11:21", "num": "+7 916 001-37-71", "name": "", "dir": "out", "sec": 99, "service": false}, {"t": "11:33", "num": "+7 963 673-95-54", "name": "", "dir": "in", "sec": 62, "service": false}, {"t": "11:39", "num": "+7 926 535-62-63", "name": "", "dir": "in", "sec": 60, "service": false}, {"t": "11:49", "num": "+7 985 453-33-90", "name": "", "dir": "out", "sec": 96, "service": false}, {"t": "11:52", "num": "+7 910 561-77-44", "name": "", "dir": "out", "sec": 9, "service": false}, {"t": "11:55", "num": "+7 968 289-45-20", "name": "", "dir": "out", "sec": 7, "service": false}, {"t": "12:25", "num": "+7 910 561-77-44", "name": "", "dir": "out", "sec": 66, "service": false}, {"t": "12:30", "num": "+7 926 362-83-02", "name": "", "dir": "out", "sec": 42, "service": false}, {"t": "12:32", "num": "+7 915 046-58-28", "name": "", "dir": "out", "sec": 107, "service": false}, {"t": "14:20", "num": "+7 985 388-05-58", "name": "", "dir": "out", "sec": 225, "service": false}, {"t": "14:24", "num": "+7 995 117-22-04", "name": "", "dir": "out", "sec": 112, "service": false}, {"t": "15:16", "num": "+7 903 667-37-49", "name": "", "dir": "out", "sec": 300, "service": false}, {"t": "15:45", "num": "+7 963 637-26-93", "name": "", "dir": "out", "sec": 36, "service": false}, {"t": "16:18", "num": "+7 926 562-40-65", "name": "", "dir": "out", "sec": 194, "service": false}, {"t": "16:22", "num": "+7 985 388-05-58", "name": "", "dir": "out", "sec": 123, "service": false}, {"t": "16:25", "num": "+7 916 838-77-51", "name": "", "dir": "out", "sec": 737, "service": false}, {"t": "16:40", "num": "+7 906 093-23-07", "name": "", "dir": "out", "sec": 83, "service": false}, {"t": "16:45", "num": "+7 985 388-05-58", "name": "", "dir": "out", "sec": 110, "service": false}, {"t": "17:03", "num": "+7 995 117-22-04", "name": "", "dir": "out", "sec": 220, "service": false}, {"t": "18:30", "num": "+7 985 388-05-58", "name": "", "dir": "out", "sec": 24, "service": false}, {"t": "18:32", "num": "+7 916 620-44-30", "name": "", "dir": "out", "sec": 100, "service": false}, {"t": "18:32", "num": "+7 915 046-58-28", "name": "", "dir": "out", "sec": 13, "service": false}], "totalSec": 4193, "callsCount": 30}, "georgy_2026-09-10": {"manager": "georgy", "date": "2026-09-10", "asOf": "2026-09-10 16:29", "source": "beeline_pdf", "calls": [{"t": "09:06", "num": "+7 903 534-78-79", "name": "", "dir": "out", "sec": 381, "service": false}, {"t": "09:48", "num": "+7 915 195-47-38", "name": "ООО ПАНЕЛАО ФМ: недвиж", "dir": "out", "sec": 100, "service": false}, {"t": "09:50", "num": "+7 910 413-96-02", "name": "ООО АТВ-ИНВЕСТ: аренда", "dir": "out", "sec": 58, "service": false}, {"t": "10:00", "num": "+7 916 620-44-30", "name": "", "dir": "out", "sec": 52, "service": false}, {"t": "10:04", "num": "+7 926 362-83-02", "name": "", "dir": "out", "sec": 10, "service": false}, {"t": "10:35", "num": "+7 926 362-83-02", "name": "", "dir": "out", "sec": 23, "service": false}, {"t": "12:17", "num": "+7 985 388-05-58", "name": "", "dir": "in", "sec": 1055, "service": false}, {"t": "13:10", "num": "+7 915 300-92-73", "name": "", "dir": "out", "sec": 54, "service": false}, {"t": "13:43", "num": "+7 909 403-76-77", "name": "Премиум Парк Отель", "dir": "out", "sec": 299, "service": false}, {"t": "15:00", "num": "+7 985 388-05-58", "name": "", "dir": "out", "sec": 444, "service": false}, {"t": "15:18", "num": "+7 926 562-40-65", "name": "", "dir": "out", "sec": 44, "service": false}], "totalSec": 2520, "callsCount": 11}}, "mango": {"georgy_p2026-09-03": {"manager": "georgy", "period": "2026-09-03", "minutes": 37, "scope": "period", "by": "claude", "updatedAt": "2026-09-10T17:30:00+03:00"}}};
+const $=id=>document.getElementById(id);
+const LEVELS=[
+  {min:0,name:"Стажер"},{min:300,name:"Продавец"},{min:1000,name:"Переговорщик"},
+  {min:2500,name:"Профи"},{min:5000,name:"Мастер звонка"},{min:10000,name:"Легенда"}];
+const DOW=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+const MON=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const MONs=["янв","фев","мар","апр","мая","июн","июл","авг","сен","окт","ноя","дек"];
+
+const S={db:null,config:{dailyGoal:60,goalSet:false,minSec:30,managers:[{id:"georgy",name:"Георгий"}]},
+  bee:{},mango:{},mgr:null,date:null,loaded:false};
+
+/* ---------- dates (Europe/Moscow) ---------- */
+function todayMsk(){
+  const p=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Moscow",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+  return p; // YYYY-MM-DD
+}
+function toD(s){const [y,m,d]=s.split("-").map(Number);return new Date(Date.UTC(y,m-1,d));}
+function fromD(d){return d.toISOString().slice(0,10);}
+function addDays(s,n){const d=toD(s);d.setUTCDate(d.getUTCDate()+n);return fromD(d);}
+function dow(s){return toD(s).getUTCDay();}
+function nowTime(){return new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Moscow",hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date());}
+function PB(){return S.config.periodStart||{dow:4,time:"14:00"};}
+function periodOf(d,t){const pb=PB();const back=(dow(d)-pb.dow+7)%7;let st=addDays(d,-back);if(back===0&&t<pb.time)st=addDays(st,-7);return st;}
+function quotaInfo(ps){const q=S.config.quotas||{};const ks=Object.keys(q).filter(k=>k<=ps).sort();if(ks.length){const k=ks[ks.length-1];return {w:Number(q[k]),set:true,from:k};}return {w:(S.config.dailyGoal||60)*5,set:false};}
+function dayNorm(d){return Math.round(quotaInfo(periodOf(d,"23:59")).w/5);}
+function curPeriod(){return periodOf(todayMsk(),nowTime());}
+function periodDates(ps){return [0,1,2,3,4,5,6,7].map(i=>addDays(ps,i));}
+function fmtPer(ps){const t=PB().time;return fmtDM(ps)+" "+t+" - "+fmtDM(addDays(ps,7))+" "+t;}
+function monday(s){const w=dow(s);return addDays(s,-(w===0?6:w-1));}
+function isWork(s){const w=dow(s);return w>=1&&w<=5;}
+function fmtLong(s){const d=toD(s);return d.getUTCDate()+" "+MON[d.getUTCMonth()];}
+function fmtShort(s){const d=toD(s);return d.getUTCDate()+" "+MONs[d.getUTCMonth()];}
+function fmtDM(s){const d=toD(s);return String(d.getUTCDate()).padStart(2,"0")+"."+String(d.getUTCMonth()+1).padStart(2,"0");}
+function mmss(sec){const m=Math.floor(sec/60),s=sec%60;return m+":"+String(s).padStart(2,"0");}
+function plural(n,a,b,c){n=Math.abs(n)%100;const n1=n%10;if(n>10&&n<20)return c;if(n1>1&&n1<5)return b;if(n1===1)return a;return c;}
+function minWord(n){return plural(Math.round(n),"минута","минуты","минут");}
+function fmtNum(d){return d.length===11?"+"+d[0]+" "+d.slice(1,4)+" "+d.slice(4,7)+"-"+d.slice(7,9)+"-"+d.slice(9):d;}
+function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+/* ---------- scoring ---------- */
+function normNum(x){let d=String(x||"").replace(/\D/g,"");if(d.length===11&&d[0]==="8")d="7"+d.slice(1);if(d.length===10)d="7"+d;return d;}
+function isColleague(c){const ex=S.config.excluded||[];return !!c.num&&ex.includes(normNum(c.num));}
+function counted(c){return !c.service && !isColleague(c) && c.sec>=(S.config.minSec??30);}
+function beeDoc(m,d){return S.bee[m+"_"+d];}
+function mangoMin(m,d){const x=S.mango[m+"_"+d];return x?Number(x.minutes)||0:0;}
+function beeSec(m,d){const x=beeDoc(m,d);if(!x||!Array.isArray(x.calls))return 0;return x.calls.filter(counted).reduce((a,c)=>a+c.sec,0);}
+function dayMin(m,d){return beeSec(m,d)/60+mangoMin(m,d);}
+function perBeeSec(m,ps,d){const x=beeDoc(m,d);if(!x||!Array.isArray(x.calls))return 0;return x.calls.filter(c=>counted(c)&&periodOf(d,c.t)===ps).reduce((a,c)=>a+c.sec,0);}
+function perDayMango(m,ps,d){return periodOf(d,"00:00")===ps?mangoMin(m,d):0;} // дневные минуты Манго граничного четверга идут в неделю, которая в этот день закрывается
+function perMangoTotal(m,ps){const x=S.mango[m+"_p"+ps];return x?Number(x.minutes)||0:0;}
+function perBee(m,ps){return periodDates(ps).reduce((a,d)=>a+perBeeSec(m,ps,d),0)/60;}
+function perMango(m,ps){return periodDates(ps).reduce((a,d)=>a+perDayMango(m,ps,d),0)+perMangoTotal(m,ps);}
+function periodMin(m,ps){return perBee(m,ps)+perMango(m,ps);}
+function allPeriods(m){const set=new Set();allDates(m).forEach(d=>{set.add(periodOf(d,"00:00"));set.add(periodOf(d,"23:59"));});for(const k in S.mango){const x=S.mango[k];if(x.manager===m&&x.period)set.add(x.period);}return [...set].sort();}
+function allDates(m){
+  const set=new Set();
+  for(const k in S.bee) if(S.bee[k].manager===m) set.add(S.bee[k].date);
+  for(const k in S.mango) if(S.mango[k].manager===m&&S.mango[k].date) set.add(S.mango[k].date);
+  return [...set].sort();
+}
+function streak(m,upto){
+  const dates=allDates(m);
+  if(!dates.length) return 0;
+  const first=dates[0]; let n=0, d=upto;
+  if(dayMin(m,d)<dayNorm(d)) d=addDays(d,-1); // текущий день не обрывает серию, пока он не закончен
+  while(d>=first){
+    const v=dayMin(m,d);
+    if(v>=dayNorm(d)) n++;
+    else if(isWork(d)) break;
+    d=addDays(d,-1);
+  }
+  return n;
+}
+function levelOf(total){let i=0;LEVELS.forEach((l,j)=>{if(total>=l.min)i=j;});return i;}
+function mgrName(id){const x=(S.config.managers||[]).find(m=>m.id===id);return x?x.name:id;}
+
+/* ---------- render ---------- */
+function render(){
+  const m=S.mgr, d=S.date, goal=dayNorm(d), today=todayMsk(), qi=quotaInfo(S.period);
+  const isToday=d===today;
+  $("cur").textContent=(isToday?"Сегодня, ":DOW[dow(d)]+", ")+fmtShort(d);
+  $("next").disabled=d>=today;
+
+  // freshness
+  const lastBee=Object.values(S.bee).filter(x=>x.manager===m&&x.asOf).map(x=>x.asOf).sort().pop();
+  const lastMango=Object.values(S.mango).filter(x=>x.manager===m).map(x=>x.period?addDays(x.period,7):x.date).sort().pop();
+  $("fresh").innerHTML=
+    `<span class="chip"><span class="dot bee"></span>Билайн: ${lastBee?"детализация на "+fmtDM(lastBee.slice(0,10))+" "+lastBee.slice(11,16):"нет данных"}</span>`+
+    `<span class="chip"><span class="dot mango"></span>Манго: ${lastMango?"внесено по "+fmtDM(lastMango):"нет данных"}</span>`+
+    (qi.set?`<span class="chip">Квота ${qi.w} мин за неделю · ${Math.round(qi.w/5)} мин в день</span>`:`<span class="chip">На эту неделю квота не назначалась, ориентир ${qi.w} мин</span>`);
+
+  // today
+  const bs=beeSec(m,d), mm=mangoMin(m,d), tot=bs/60+mm;
+  $("dayLabel").textContent=isToday?"Сегодня":DOW[dow(d)]+", "+fmtLong(d);
+  $("dayTitle").textContent=Math.round(tot)+" "+minWord(tot)+" с клиентами из "+goal;
+  const st=$("status");
+  if(tot>=goal){st.className="status ok";st.textContent="Норма выполнена"+(tot>goal?", +"+Math.round(tot-goal)+" сверху":"");}
+  else if(tot>0){st.className="status go";st.textContent="До нормы "+Math.ceil(goal-tot)+" мин";}
+  else {st.className="status idle";st.textContent=isWork(d)?"Разговоров пока нет":"Выходной";}
+  $("vBee").textContent=Math.round(bs/60)+" мин";
+  $("vMango").textContent=Math.round(mm)+" мин";
+  const sb=$("splitBar").children, denom=Math.max(goal,tot)||1;
+  sb[0].style.width=(bs/60/denom*100)+"%"; sb[1].style.width=(mm/denom*100)+"%";
+  drawGauge(tot,goal);
+
+  // week
+  const ps=S.period, cp=curPeriod(), wd=periodDates(ps), wb=perBee(m,ps), wm=perMango(m,ps), wtot=wb+wm, wgoal=qi.w, pgoal=Math.round(wgoal/5);
+  $("weekLabel").textContent=ps===cp?"Отчетная неделя - идет сейчас":ps<cp?"Отчетная неделя - завершена":"Отчетная неделя";
+  $("weekTitle").textContent=fmtPer(ps);
+  $("pNext").disabled=ps>=cp;
+  $("weekSplit").innerHTML=`<span><span class="dot bee"></span>Билайн <b class="num">${Math.round(wb)} мин</b></span><span><span class="dot mango"></span>Манго <b class="num">${Math.round(wm)} мин</b>${perMangoTotal(m,ps)?" (итог за неделю)":""}</span>`;
+  $("mPer").textContent=fmtPer(ps);
+  $("weekTotal").innerHTML=Math.round(wtot)+"<small>из "+wgoal+" мин"+(qi.set?"":" (ориентир)")+"</small>";
+  const left=wgoal-wtot;
+  $("weekHint").textContent=(left>0?"до квоты "+Math.ceil(left)+" мин":"квота выполнена")+" · "+Math.round(wtot/wgoal*100)+"%";
+  drawChart(m,ps,wd,pgoal,d,today);
+
+  // log
+  renderLog(m,d);
+  renderRank(ps);
+  renderTop(m,ps,wd);
+
+  // forms
+  if(!$("mDate").value) $("mDate").value=d;
+  const per=$("mScope").value==="period"; $("mDateF").hidden=per; $("mPerF").hidden=!per;
+  if(document.activeElement!==$("cGoal")) $("cGoal").value=qi.w;
+  if(document.activeElement!==$("cMin")) $("cMin").value=S.config.minSec??30;
+  if(document.activeElement!==$("cEx")) $("cEx").value=(S.config.excluded||[]).map(fmtNum).join("\n");
+}
+
+function drawGauge(v,goal){
+  const r=84, c=2*Math.PI*r, sweep=0.75, len=c*sweep;
+  const p=Math.min(v/goal,1), over=v>goal;
+  const col=over||v>=goal?"var(--good)":"var(--accent)";
+  $("gauge").innerHTML=
+  `<svg viewBox="0 0 200 200" role="img" aria-label="${Math.round(v)} из ${goal} минут">
+    <g transform="rotate(135 100 100)">
+      <circle cx="100" cy="100" r="${r}" fill="none" stroke="var(--sunk)" stroke-width="14" stroke-linecap="round" stroke-dasharray="${len} ${c}"/>
+      <circle class="arc" cx="100" cy="100" r="${r}" fill="none" stroke="${col}" stroke-width="14" stroke-linecap="round" stroke-dasharray="${len} ${c}" stroke-dashoffset="${len*(1-p)}"/>
+    </g>
+  </svg>
+  <div class="center"><div class="big num">${Math.round(v)}</div><div class="of">из ${goal} мин</div></div>`;
+}
+
+function drawChart(m,ps,wd,goal,sel,today){
+  const W=720,H=250,pl=40,pr=12,pt=18,pb=44, iw=W-pl-pr, ih=H-pt-pb;
+  const vals=wd.map(d=>({d,b:perBeeSec(m,ps,d)/60,m:perDayMango(m,ps,d)}));
+  const maxV=Math.max(goal*1.25,...vals.map(v=>v.b+v.m));
+  const step=maxV>240?60:maxV>120?30:maxV>60?20:10;
+  const top=Math.ceil(maxV/step)*step;
+  const y=v=>pt+ih-(v/top)*ih;
+  const bw=iw/8, barW=Math.min(50,bw*0.56), pt0=PB().time;
+  let g="";
+  for(let t=0;t<=top;t+=step){
+    g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" stroke-width="1"/>`;
+    g+=`<text x="${pl-8}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Golos Text,system-ui">${t}</text>`;
+  }
+  vals.forEach((v,i)=>{
+    const cx=pl+bw*i+bw/2, x=cx-barW/2, tot=v.b+v.m, future=v.d>today;
+    const hb=(v.b/top)*ih, hm=(v.m/top)*ih;
+    if(v.b>0) g+=`<rect x="${x}" y="${y(v.b)}" width="${barW}" height="${hb}" rx="4" fill="var(--bee)"/>`;
+    if(v.m>0) g+=`<rect x="${x}" y="${y(v.b+v.m)}" width="${barW}" height="${hm}" rx="4" fill="var(--mango)"/>`;
+    if(tot===0&&!future) g+=`<rect x="${x}" y="${y(0)-3}" width="${barW}" height="3" rx="1.5" fill="var(--line)"/>`;
+    if(tot>0){
+      const met=tot>=goal;
+      g+=`<text x="${cx}" y="${y(tot)-7}" text-anchor="middle" font-size="12.5" font-weight="600" fill="${met?"var(--good)":"var(--ink)"}" font-family="Golos Text,system-ui">${Math.round(tot)}${met?" ✓":""}</text>`;
+    }
+    const isSel=v.d===sel;
+    g+=`<text x="${cx}" y="${H-pb+18}" text-anchor="middle" font-size="12" font-weight="${isSel?700:500}" fill="${isSel?"var(--accent)":"var(--ink2)"}" font-family="Golos Text,system-ui">${DOW[dow(v.d)]}</text>`;
+    const sub=i===0?"с "+pt0:i===7?"до "+pt0:fmtDM(v.d);
+    g+=`<text x="${cx}" y="${H-pb+33}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="Golos Text,system-ui">${i===0||i===7?fmtDM(v.d)+" "+sub:sub}</text>`;
+    g+=`<rect x="${pl+bw*i}" y="${pt}" width="${bw}" height="${H-pt}" fill="transparent" data-d="${v.d}" style="cursor:pointer"><title>${DOW[dow(v.d)]} ${fmtDM(v.d)}: ${Math.round(tot)} мин</title></rect>`;
+  });
+  g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(goal)}" y2="${y(goal)}" stroke="var(--ink2)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  g+=`<text x="${W-pr}" y="${y(goal)-6}" text-anchor="end" font-size="11" fill="var(--ink2)" font-family="Golos Text,system-ui">норма ${goal}</text>`;
+  $("chart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Минуты по дням отчетной недели">${g}</svg>`;
+  $("chart").querySelectorAll("rect[data-d]").forEach(r=>r.addEventListener("click",()=>{const dd=r.getAttribute("data-d");if(dd<=todayMsk()){S.date=dd;$("mDate").value=dd;render();}}));
+}
+
+function renderLog(m,d){
+  const x=beeDoc(m,d), mm=S.mango[m+"_"+d];
+  $("mangoLine").innerHTML=mm?`<div class="mango-line"><span class="dot mango"></span>Манго Телеком, итог дня<span class="v num">${Math.round(mm.minutes)} мин</span></div>`:"";
+  if(!x||!x.calls||!x.calls.length){
+    $("log").innerHTML=`<div class="empty">${S.loaded?"Звонков с Билайна за этот день нет. Данные появятся после загрузки детализации.":"Загрузка..."}</div>`;
+    $("logCount").textContent=""; return;
+  }
+  const calls=[...x.calls].sort((a,b)=>a.t<b.t?1:-1);
+  const n=calls.filter(counted).length;
+  $("logCount").textContent=n+" из "+calls.length+" в зачет";
+  const minS=S.config.minSec??30;
+  $("log").innerHTML=`<table><thead><tr><th>Время</th><th></th><th>Клиент</th><th class="r">Длит.</th></tr></thead><tbody>${
+    calls.map(c=>{
+      const ok=counted(c), why=c.service?"служебный":isColleague(c)?"коллега":("короче "+minS+" с");
+      return `<tr class="${ok?"":"skip"}"><td class="t">${esc(c.t)}</td><td><span class="dir ${c.dir}" title="${c.dir==="in"?"Входящий":"Исходящий"}">${c.dir==="in"?"↙":"↗"}</span></td>
+      <td><div class="who"><span class="n">${esc(c.name||c.num||"Номер скрыт")}${ok?"":`<span class="tag">${why}</span>`}</span>${c.name?`<span class="p">${esc(c.num)}</span>`:""}</div></td>
+      <td class="d">${mmss(c.sec)}</td></tr>`;}).join("")
+  }</tbody></table>`;
+}
+
+function renderRank(ps){
+  const list=(S.config.managers||[]).map(mg=>({id:mg.id,name:mg.name,v:periodMin(mg.id,ps)})).sort((a,b)=>b.v-a.v);
+  $("rank").innerHTML=list.map((r,i)=>`<div class="r"><span class="pos">${i+1}</span><span class="nm">${esc(r.name)}</span><span class="mn num">${Math.round(r.v)} мин</span></div>`).join("")+
+    (list.length<2?`<div class="soon">Остальные менеджеры появятся в рейтинге после подключения их выгрузок.</div>`:"");
+}
+
+function renderTop(m,ps,wd){
+  const agg={};
+  wd.forEach(d=>{const x=beeDoc(m,d);(x&&x.calls||[]).forEach(c=>{if(!counted(c)||periodOf(d,c.t)!==ps)return;const k=c.num||"-";agg[k]=agg[k]||{num:c.num,name:"",sec:0,n:0};agg[k].sec+=c.sec;agg[k].n++;if(c.name)agg[k].name=c.name;});});
+  const arr=Object.values(agg).sort((a,b)=>b.sec-a.sec).slice(0,6);
+  if(!arr.length){$("topList").innerHTML=`<div class="empty">За эту неделю засчитанных звонков нет.</div>`;return;}
+  const mx=arr[0].sec;
+  $("topList").innerHTML=arr.map(a=>`<div class="it"><div class="ln"><span class="nm">${esc(a.name||a.num)}${a.name?` <span class="hint">${esc(a.num)}</span>`:""}</span><span class="mn num">${Math.round(a.sec/60)} мин · ${a.n} ${plural(a.n,"звонок","звонка","звонков")}</span></div><div class="bar"><i style="width:${a.sec/mx*100}%"></i></div></div>`).join("");
+}
+
+/* ---------- controls ---------- */
+$("prev").onclick=()=>{S.date=addDays(S.date,-1);render();};
+$("next").onclick=()=>{const t=todayMsk();if(S.date<t){S.date=addDays(S.date,1);render();}};
+$("cur").onclick=()=>{S.date=todayMsk();render();};
+$("mgr").onchange=e=>{S.mgr=e.target.value;render();};
+$("pPrev").onclick=()=>{S.period=addDays(S.period,-7);render();};
+$("pNext").onclick=()=>{const cp=curPeriod();if(S.period<cp){S.period=addDays(S.period,7);render();}};
+$("mScope").onchange=()=>render();
+
+function fillManagers(){
+  const sel=$("mgr"), ms=S.config.managers||[];
+  if(!S.mgr||!ms.find(x=>x.id===S.mgr)) S.mgr=(ms[0]||{}).id||"georgy";
+  sel.innerHTML=ms.map(x=>`<option value="${esc(x.id)}"${x.id===S.mgr?" selected":""}>${esc(x.name)}</option>`).join("");
+}
+
+function toast(id,msg,err){const t=$(id);t.textContent=msg;t.className="toast"+(err?" err":"");setTimeout(()=>{if(t.textContent===msg)t.textContent="";},4000);}
+
+$("mangoForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!S.db){toast("mToast","База недоступна в этом просмотре. Откройте страницу в Claude.",true);return;}
+  const per=$("mScope").value==="period", date=$("mDate").value, v=Number($("mMin").value);
+  if((!per&&!date)||!($("mMin").value!=="")||!(v>=0)){toast("mToast",per?"Укажите число минут.":"Укажите дату и число минут.",true);return;}
+  $("mSave").disabled=true;
+  try{
+    if(per) await S.db.doc("mango/"+S.mgr+"_p"+S.period).set({manager:S.mgr,period:S.period,minutes:v,scope:"period",by:"page",updatedAt:new Date().toISOString()});
+    else await S.db.doc("mango/"+S.mgr+"_"+date).set({manager:S.mgr,date,minutes:v,by:"page",updatedAt:new Date().toISOString()});
+    toast("mToast","Сохранено: "+v+" мин Манго за "+(per?"неделю "+fmtPer(S.period):fmtDM(date)));
+    $("mMin").value="";
+  }catch(err){toast("mToast","Не сохранилось: "+(err&&err.message||"ошибка базы")+". Повторите через минуту.",true);}
+  $("mSave").disabled=false;
+});
+$("cfgForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!S.db){toast("cToast","База недоступна в этом просмотре.",true);return;}
+  const g=Math.round(Number($("cGoal").value)), ms=Math.round(Number($("cMin").value));
+  if(!(g>0)||!(ms>=0)){toast("cToast","Квота должна быть больше нуля.",true);return;}
+  $("cSave").disabled=true;
+  try{
+    const ex=[...new Set($("cEx").value.split(/[\n,;]+/).map(normNum).filter(x=>x.length>=10))];
+    const quotas=Object.assign({},S.config.quotas||{});quotas[S.period]=g;
+    const next=Object.assign({},S.config,{quotas,minSec:ms,excluded:ex,goalSet:true,updatedAt:new Date().toISOString()});
+    await S.db.doc("config/main").set(next);
+    toast("cToast","Сохранено: квота "+g+" мин с недели "+fmtDM(S.period)+", звонки от "+ms+" с, исключений "+ex.length);
+  }catch(err){toast("cToast","Не сохранилось: "+(err&&err.message||"ошибка базы"),true);}
+  $("cSave").disabled=false;
+});
+
+/* ---------- boot ---------- */
+S.date=todayMsk();
+(function(){const cp=curPeriod();S.period=cp===todayMsk()?addDays(cp,-7):cp;})(); // в день отчета показываем закрытую неделю
+fillManagers(); render();
+
+
+const LS="minutnaya-liga-v1";
+function lsGet(){try{return JSON.parse(localStorage.getItem(LS)||"{}");}catch(e){return {};}}
+function lsSet(o){try{localStorage.setItem(LS,JSON.stringify(o));return true;}catch(e){return false;}}
+const LOCAL={
+  doc:p=>({set:async d=>{const o=lsGet();o[p]=d;lsSet(o);apply();}})
+};
+function apply(){
+  const o=lsGet();
+  S.config=Object.assign({},EMBED.config,o["config/main"]||{});
+  S.bee=EMBED.bee;
+  S.mango=Object.assign({},EMBED.mango);
+  for(const k in o){if(k.startsWith("mango/"))S.mango[k.slice(6)]=o[k];}
+  S.loaded=true;fillManagers();render();
+}
+function boot(){
+  S.db=LOCAL; apply();
+  const n=$("notice");n.hidden=false;
+  const d=Object.values(EMBED.bee).map(x=>x.asOf).filter(Boolean).sort().pop()||"";
+  n.textContent="Файловая версия. Данные Билайн на "+(d?d.slice(8,10)+"."+d.slice(5,7)+" "+d.slice(11,16):"-")+". Минуты Манго и правила, внесенные здесь, сохраняются только в этом браузере.";
+}
+boot();
+})();
+</script>
+
+</body>
+</html>
